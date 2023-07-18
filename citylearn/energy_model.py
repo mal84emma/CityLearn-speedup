@@ -183,7 +183,8 @@ class HeatPump(ElectricDevice):
         cooling_cop = (`t_target_cooling` + 273.15)*`efficiency`/(outdoor_dry_bulb_temperature - `t_target_cooling`)
         """
 
-        if isinstance(outdoor_dry_bulb_temperature,Iterable): # do type checking only once
+        if hasattr(outdoor_dry_bulb_temperature,'__iter__'): # do type checking only once
+            # note we abuse the existence of .__iter__ for np.arrays but not floats for speed
             outdoor_dry_bulb_temperature = np.array(outdoor_dry_bulb_temperature)
             cop = self.compute_cop(outdoor_dry_bulb_temperature, heating)
             cop[cop < 0] = 20
