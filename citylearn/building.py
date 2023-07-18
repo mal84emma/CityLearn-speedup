@@ -651,6 +651,11 @@ class Building(Environment):
         periodic_normalization = False if periodic_normalization is None else periodic_normalization
         include_all = False if include_all is None else include_all
 
+        # This dictionary construct is very expensive (roughly 30% of runtime)
+        # My advice would be to construct `observations` directly, and first
+        # check whether the key is in `valid_observations` before evaluating
+        # and adding the value. However this would make the code less readable
+        # and full of duplicate lines.
         observations = {}
         data = {
             **{k: v[self.time_step] for k, v in vars(self.energy_simulation).items()},
