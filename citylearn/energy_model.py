@@ -183,17 +183,27 @@ class HeatPump(ElectricDevice):
         cooling_cop = (`t_target_cooling` + 273.15)*`efficiency`/(outdoor_dry_bulb_temperature - `t_target_cooling`)
         """
 
+        if isinstance(outdoor_dry_bulb_temperature,Iterable): # do type checking only once
+            outdoor_dry_bulb_temperature = np.array(outdoor_dry_bulb_temperature)
+            cop = self.compute_cop(outdoor_dry_bulb_temperature, heating)
+            cop[cop < 0] = 20
+            cop[cop > 20] = 20
+        else:
+            cop = self.compute_cop(outdoor_dry_bulb_temperature, heating)
+            if (cop < 0) or (cop > 20): cop = 20
+
+        return cop
+
+    def compute_cop(self, outdoor_dry_bulb_temperature: Union[float, Iterable[float]], heating: bool) -> Union[float, Iterable[float]]:
+        # this method trusts that type checking has already been done and is fast
+
         c_to_k = lambda x: x + 273.15
-        outdoor_dry_bulb_temperature = np.array(outdoor_dry_bulb_temperature)
 
         if heating:
             cop = self.efficiency*c_to_k(self.target_heating_temperature)/(self.target_heating_temperature - outdoor_dry_bulb_temperature)
         else:
             cop = self.efficiency*c_to_k(self.target_cooling_temperature)/(outdoor_dry_bulb_temperature - self.target_cooling_temperature)
-        
-        cop = np.array(cop)
-        cop[cop < 0] = 20
-        cop[cop > 20] = 20
+
         return cop
 
     def get_max_output_power(self, outdoor_dry_bulb_temperature: Union[float, Iterable[float]], heating: bool, max_electric_power: Union[float, Iterable[float]] = None) -> Union[float, Iterable[float]]:
